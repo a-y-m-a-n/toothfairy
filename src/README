@@ -1,0 +1,376 @@
+# 9DXX = Device 13A
+# ADXX = Device 15A
+
+Audio           00009D64
+Shuffle         00009D35
+Angle           00009D65
+Program         00009D1F
+Subtitle        00009D63
+Repeat          00009D2C
+Slow<           00009D60
+Slow>           00009D61
+Clear           00009D0F
+Time            00009D28
+Scan<           00009D33
+Scan>           00009D34
+Prev            00009D30
+Next            00009D31
+A-B             00009D2A
+Play            00009D32
+Pause           00009D39
+Stop            00009D38
+Display         00009D54
+Title           00009D1A        # Probably same as top menu
+DVD_Menu        00009D1B
+Return          00009D0E
+
+# Square is strange in that it transmits on release
+
+Triangle        0000AD5C
+Circle          0000AD5D
+Square          0000AD5F
+X               0000AD5E
+
+# U/D/L/R All transmit two codes
+
+Up              0000AD54        
+Up              00009D79
+
+Down            0000AD56        
+Down            00009D7A
+
+Left            0000AD57        
+Left            00009D7B
+
+Right           0000AD55        
+Right           00009D7C
+
+Enter           00009D0B
+
+
+L1              0000AD5A
+L2              0000AD58
+L3              0000AD51
+
+R1              0000AD5B
+R2              0000AD59
+R3              0000AD52
+
+Select          0000AD50
+Start           0000AD53
+
+
+1               00009D00
+2               00009D01
+3               00009D02
+4               00009D03
+5               00009D04
+6               00009D05
+7               00009D06
+8               00009D07
+9               00009D08
+0               00009D09
+
+# Unverified
+Power           00009D15  # probably same as reset/io
+Eject           00009D16
+PowerOn         00009D2E
+PowerOff        00009D2F
+always @ (s1 or scan_in) begin
+		case(s1)
+			3'h1:   sense[1] = scan_in[9]; 			// eject
+			3'h2:   sense[1] = scan_in[10];        // 1
+			3'h3:   sense[1] = scan_in[11];        // 2
+			3'h4:   sense[1] = scan_in[12];        // 3
+			3'h5:   sense[1] = scan_in[13];        // audio
+			3'h6:   sense[1] = scan_in[14];        // triangle
+			3'h7:   sense[1] = scan_in[22];        // up			
+			default: sense[1] = 1;
+		endcase
+	end
+		
+	always @ (s2 or scan_in) begin
+		case(s2)
+			3'h1:   sense[2] = scan_in[9]; 			// 4
+			3'h2:   sense[2] = scan_in[10];        // 5
+			3'h3:   sense[2] = scan_in[11];        // 6
+			3'h4:   sense[2] = scan_in[12];        // angle
+			3'h5:   sense[2] = scan_in[13];        // 7
+			3'h6:   sense[2] = scan_in[15];        // circle
+			3'h7:   sense[2] = scan_in[23];        // left		
+			default: sense[2] = 1;
+		endcase
+	end
+	
+
+	always @ (s3 or scan_in) begin
+		case(s3)
+			3'h1:   sense[3] = scan_in[9]; 			// 8
+			3'h2:   sense[3] = scan_in[10];        // 9
+			3'h3:   sense[3] = scan_in[11];        // sub
+			3'h4:   sense[3] = scan_in[12];        // clear
+			3'h5:   sense[3] = scan_in[13];        // 0
+			3'h6:   sense[3] = scan_in[16];        // enter
+			3'h7:   sense[3] = scan_in[24];        // right
+			default: sense[3] = 1;
+		endcase
+	end
+	
+
+	always @ (s4 or scan_in) begin
+		case(s4)
+			3'h1:   sense[4] = scan_in[9]; 		   // time
+			3'h2:   sense[4] = scan_in[10];        // red
+			3'h3:   sense[4] = scan_in[11];        // grn
+			3'h4:   sense[4] = scan_in[12];        // blu
+			3'h5:   sense[4] = scan_in[13];        // yel
+			3'h6:   sense[4] = scan_in[17];        // square
+			3'h7:   sense[4] = scan_in[25];        // down		
+			default: sense[4] = 1;
+		endcase
+	end
+
+	always @ (s5 or scan_in) begin
+		case(s5)
+			3'h1:   sense[5] = scan_in[9]; 			// display
+			3'h2:   sense[5] = scan_in[10];        // top menu
+			3'h3:   sense[5] = scan_in[11];        // pop menu
+			3'h4:   sense[5] = scan_in[12];        // return
+			3'h5:   sense[5] = scan_in[13];        // rev
+			3'h6:   sense[5] = scan_in[18];        // x
+			3'h7:   sense[5] = scan_in[26];        // l1		
+			default: sense[5] = 1;
+		endcase
+	end
+
+
+	always @ (s6 or scan_in) begin
+		case(s6)
+			3'h1:   sense[6] = scan_in[9]; 			// play
+			3'h2:   sense[6] = scan_in[10];        // fwd
+			3'h3:   sense[6] = scan_in[11];        // l3
+			3'h4:   sense[6] = scan_in[12];        // skip rev
+			3'h5:   sense[6] = scan_in[13];        // stop
+			3'h6:   sense[6] = scan_in[19];        // ps
+			3'h7:   sense[6] = scan_in[27];        // r1		
+			default: sense[6] = 1;
+		endcase
+	end
+
+	always @ (s7 or scan_in) begin
+		case(s7)
+			3'h1:   sense[7] = scan_in[9]; 		   // skip fwd
+			3'h2:   sense[7] = scan_in[10];        // step rev
+			3'h3:   sense[7] = scan_in[11];        // pause
+			3'h4:   sense[7] = scan_in[12];        // select
+			3'h5:   sense[7] = scan_in[13];        // step fwd
+			3'h6:   sense[7] = scan_in[20];        // l2
+			3'h7:   sense[7] = scan_in[28];        // r2			
+			default: sense[7] = 1;
+		endcase
+	end
+
+
+	always @ (s8 or scan_in) begin
+		case(s8)
+			3'h1:   sense[8] = scan_in[13]; 	    // r3
+			3'h2:   sense[8] = scan_in[21];      // start
+			default: sense[8] = 1;
+		endcase		
+	end
+Need to move the reset from PA2 since that will not work
+
+Xantech uses tip of + and ring of - , diode clamp the signal to 3V or so
+and use AIN1, and set the bandgap at AIN0, with a pair of ext resistors
+if required.
+
+http://forums.slimdevices.com/showthread.php?t=40127
+
+
+Resistor network MNR15102CT-ND
+
+Code Work for multiple key maps
+http://ps3mods.blogspot.com/2007/03/bd-remote-for-linux-update.html
+
+
+Budget:
+Digikey 90
+Mouser 40
+PS3 Remote 25
+PS2 Remote 5
+PCBFab 92
+PCBFab 135
+Mouser 30
+Mouser 50 (Rev B Buildup)
+Petsmart 3 Stainless Bown
+Office Depot 14 Lamp
+Myro 385
+Bluetooth Dongle 9
+
+fluke
+Scope
+utilities
+Desk
+Shelves
+Metcal
+
+Trips 3 Post office for run 1
+3 post office for tripe 2
+
+
+
+10k pullup internally10k pullup internally10k pullup internally10k pullup internally10k pullup internally10k pullup internally10k pullup internally10k pullup internally10k pullup internally10k pullup internally
+
+Got rid of the alternate codes for U/D/L/R Checked on another site and found the codes that correspond to ps2 dvd do not have the l1/l2/etc buttons
+
+Changed the time band for the low pulse to have more tolerance, specifically in the case of the wired input
+
+VERIFY input voltage rating on the input caps to the regulator.  Need to be 16 V variety.  Also voltage on the discrete IR input
+
+Check this part for mechanical https://secure.microplastics.com/detail.aspx?fam=5&part=326&sec=%e5%bd%9f%e6%9d%bf%eb%83%b1%e3%9f%8f%e7%9a%a6%e7%a1%86%c7%99%e1%81%aa
+
+LEDs from Digikey
+
+L20311-ND
+L20321-ND
+67-1238-ND
+67-1239-ND
+	67-1273-ND
+67-1235-ND
+754-1299-ND  * (Very inexpensive) Kingbright WP934CB/SRD
+
+Need to add support for the macro and enable disable power macro
+Need to add enable / disable magic button
+Select / Deselect Remote IR / Polarity
+Verify changes to the timing done for the space 
+Check Direct IR input
+Need to handle discrete power on and off
+Need to update fuses for protection and BOD circuit, enable BOD
+Add pullup to circuit
+verify oscillator, ok, it is about 8.1 above 25C and 3.0V
+
+
+Version 2 Units (26 July 2008)
+
+Lots of optimizations for size
+Blink save values from 1-2 changed to use a single function instead of if clause
+Shutdown macro changes (form, function)
+Decoding of signals, make sure no interference
+Moved some variable usage to local vars to reduce size
+Changed sentinel handling in load user value, make sure it does not auto-screwup and
+reload defaults on every pass
+No Key lookup
+
+Blink of save values from 1-2
+Shutdown macro changes (form, function)
+Decoding of signals, make sure no interference
+Moved some variable usage to local vars to reduce size
+Changed sentinel handling in load user value, make sure it does not auto-screwup and
+reload defaults on every pass
+No Key lookup
+
+Code Review
+Full Test
+
+a) All config options
+b) Wired IR Input
+c) Check low voltage and other recievers
+d) new shutdown macro
+e) Update documentation
+f) Update site
+g) Change tax to go to shipping
+h) Add Elite Bare
+i) Update the prices
+j) Verify valid and invalid config input for blinks (such as 
+   a play key or something in a numeric entry mode).
+k) Verify can change magic key
+l) May need to add another reset option
+m) Verify that using optional code 9 and changing the sentinel
+   will reload the defaults
+n) Verify using 0 will reprogram macro
+o) verify the new dvd compatibility mode
+
+
+
+
+Sequencer Key Delay Codes
+
+Decimal Delay, Hex Delay, Key
+
+  0 0x00 1 
+  1 0x01 2 
+  2 0x02 3 
+  3 0x03 4 
+  4 0x04 5 
+  5 0x05 6 
+  6 0x06 7 
+  7 0x07 8 
+  8 0x08 9 
+  9 0x09 0 
+ 11 0x0B Enter 
+ 14 0x0E Return 
+ 15 0x0F Clear 
+ 21 0x15 Power_Reset <UNVERIFIED> 
+ 22 0x16 Eject    <UNVERIFIED> 
+ 26 0x1A Title    <UNVERIFIED - TOP MENU>  
+ 27 0x1B DVD_Menu 
+ 31 0x1F Program - Map to GREEN 
+ 40 0x28 Time    
+ 42 0x2A A_B     - Map to YELLOW 
+ 44 0x2C Repeat  - Map to BLUE 
+ 48 0x30 Prev 
+ 49 0x31 Next 
+ 50 0x32 Play 
+ 51 0x33 Scan< 
+ 52 0x34 Scan> 
+ 53 0x35 Shuffle - Map to RED 
+ 56 0x38 Stop 
+ 57 0x39 Pause 
+ 80 0x50 Select 
+ 81 0x51 L3 
+ 82 0x52 R3 
+ 83 0x53 Start 
+ 84 0x54 Display 
+ 88 0x58 L2 
+ 89 0x59 R2 
+ 90 0x5A L1 
+ 91 0x5B R1 
+ 92 0x5C Triangle 
+ 93 0x5D Circle 
+ 94 0x5E X 
+ 95 0x5F Square <TRANSMIT ON RLSE ON VERSION 1 PS2 REMOTE> 
+ 96 0x60 Slow< 
+ 97 0x61 Slow> 
+ 99 0x63 Subtitle 
+100 0x64 Audio 
+101 0x65 Angle 
+121 0x79 Up    <2 CODES> 
+122 0x7A Down  <2 CODES> 
+123 0x7B Left  <2 CODES> 
+124 0x7C Right  <2 CODES> 
+
+Creating the documentation, first print to file and then modify the
+postscript with this command
+psbook out.ps | psnup -2 | ps2pdf - out.pdf
+B
+psbook out.ps | psnup -2 | ps2pdf - out.pdf
+
+
+
+MODELS OF REMOTES:
+Two different BT RADIOS:
+It appears that the 2nd set of digits is the lot code that is
+encoded as follows:
+
+1st Digit
+Year Code (last digit of era)
+
+2nd Digit
+Jan  Feb  Mar  Apr  May  Jun  Jul  Aug  Sep  Oct  Nov  Dec 
+1    2    3    4    5    6    7    8    9    O    N    D 
+
+3rd Digit
+Production Time Code (Seen B, A)
+
+Alps 101A 87B ALPS (Reference)
+Alps 101A 71A ALPS (Swaps Blue / Yellow)
