@@ -1,0 +1,39 @@
+
+#PINLOCK_BEGIN
+
+#Sat Feb 16 21:42:53 2008
+
+NET "data<0>"        LOC =  "S:PIN30";
+NET "data<1>"        LOC =  "S:PIN31";
+NET "data<2>"        LOC =  "S:PIN28";
+NET "reset"          LOC =  "S:PIN33";
+NET "scan<10>"       LOC =  "S:PIN37";
+NET "scan<11>"       LOC =  "S:PIN2";
+NET "scan<12>"       LOC =  "S:PIN7";
+NET "scan<13>"       LOC =  "S:PIN20";
+NET "scan<14>"       LOC =  "S:PIN29";
+NET "scan<15>"       LOC =  "S:PIN22";
+NET "scan<16>"       LOC =  "S:PIN1";
+NET "scan<17>"       LOC =  "S:PIN36";
+NET "scan<18>"       LOC =  "S:PIN40";
+NET "scan<19>"       LOC =  "S:PIN14";
+NET "scan<20>"       LOC =  "S:PIN44";
+NET "scan<21>"       LOC =  "S:PIN12";
+NET "scan<22>"       LOC =  "S:PIN32";
+NET "scan<23>"       LOC =  "S:PIN27";
+NET "scan<24>"       LOC =  "S:PIN23";
+NET "scan<25>"       LOC =  "S:PIN34";
+NET "scan<26>"       LOC =  "S:PIN21";
+NET "scan<27>"       LOC =  "S:PIN39";
+NET "scan<28>"       LOC =  "S:PIN38";
+NET "scan<9>"        LOC =  "S:PIN19";
+NET "strobe"         LOC =  "S:PIN43";
+NET "sense<1>"       LOC =  "S:PIN41";
+NET "sense<2>"       LOC =  "S:PIN42";
+NET "sense<3>"       LOC =  "S:PIN3";
+NET "sense<4>"       LOC =  "S:PIN6";
+NET "sense<5>"       LOC =  "S:PIN8";
+NET "sense<6>"       LOC =  "S:PIN13";
+NET "sense<7>"       LOC =  "S:PIN16";
+NET "sense<8>"       LOC =  "S:PIN18";
+#PINLOCK_END
