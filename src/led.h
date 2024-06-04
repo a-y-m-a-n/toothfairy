@@ -6,20 +6,20 @@
 
 void led_init(uint8_t bright_level);
 
-void led_on(void);
+//void led_on(void);
 
-void led_off(void);
+//void led_off(void);
 
 
-extern inline void led_off(void)
+static inline void led_off(void)
 {
-  DDRB  &= ~_BV(DDB3);
+  DDRB  &= ~(1<<DDB1);
 }
 
 
-extern inline void led_on(void)
+static inline void led_on(void)
 {
-  DDRB  |= _BV(DDB3);
+  DDRB  |= (1<<DDB1);
 }
 
 

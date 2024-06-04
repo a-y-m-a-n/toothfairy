@@ -1,4 +1,5 @@
 PREFIX=/usr/local/avr-gcc4/bin
+PREFIX=/usr/bin
 
 CC = $(PREFIX)/avr-gcc
 AS = $(CC) -x assembler-with-cpp
@@ -8,24 +9,28 @@ NM=$(PREFIX)/avr-nm
 
 #/usr/local/avr/bin/avr-nm --size-sort toothfairy.elf   
 
-MCU=attiny2313
-CSRCS=main.c pulse_stream.c semaphore.c hex_string.c key.c\
-	 led.c state_machine.c key_mapping.c cpld_if.c \
-	user_config.c soft_reset.c
-ASRCS=
+MCU=atmega48
+CSRCS=main.c scanner.c pulse_stream.c semaphore.c hex_string.c key.c\
+	 led.c state_machine.c  \
+	user_config.c soft_reset.c scan_mapping.c
+ASRCS= active_scanner.S
 TARGET=toothfairy
 FORMAT= ihex
 
 DEPS = $(CSRCS:.c=.d)
 
-OBJS = $(ASRCS:.s=.o) $(CSRCS:.c=.o) 
+OBJS = $(ASRCS:.S=.o) $(CSRCS:.c=.o) 
 
 OBJCOPY=$(PREFIX)/avr-objcopy
 OBJDUMP=$(PREFIX)/avr-objdump
 
-CFLAGS = -mmcu=$(MCU) -ffunction-sections -Wall -Os -g -fshort-enums -mcall-prologues #-D__DEBUG__ 
-LDFLAGS = -g -Os --ffunction-sections -Wl,--relax,--gc-sections,-Map,$(TARGET).map 
-ASFLAGS = -mmcu=$(MCU)
+F_CPU=8000000UL
+
+CFLAGS = -mmcu=$(MCU) -ffunction-sections -Wall -O2 -g -fshort-enums -mcall-prologues #-D__DEBUG__ 
+CFLAGS += -DF_CPU=$(F_CPU)
+ASFLAGS = -mmcu=$(MCU) -ffunction-sections -Wall -O2 -g -fshort-enums -mcall-prologues
+ASFLAGS += -DF_CPU=$(F_CPU)
+LDFLAGS = -g -O2 -Wl,--relax,--gc-sections,-Map,$(TARGET).map 
 
 .PHONY: all
 
@@ -45,6 +50,7 @@ $(TARGET).elf : $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $^
 	$(SIZE) $@
 	$(NM) --size-sort $@  > $(TARGET).size
+	$(SIZE) -t $@ >> $(TARGET).size
 
 %.o : %.c 
 	$(CC) $(CFLAGS) -c $<
@@ -55,6 +61,8 @@ $(TARGET).elf : $(OBJS)
 %.o : %.s
 	$(AS) -c $(ASFLAGS)  $< -o $@
 
+%.o : %.S
+	$(CC) -c $(ASFLAGS) $< -o $@
 
 %.d : %.c
 	set -e; $(CC) $(CFLAGS) -MM $(INCLUDES) $(LINKFLAGS) $< | \

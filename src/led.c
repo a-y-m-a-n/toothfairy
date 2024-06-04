@@ -11,32 +11,9 @@
 
 void led_init(uint8_t bright_level)
 {
-  //DDRB  &= ~_BV(DDB3);
-  // TCCR1A |= _BV(COM1A1)|_BV(COM1A0);  // DONE IN MAIN.C 
-
   OCR1AH=0x00;
   OCR1AL=bright_level;
 }
-
-
-// Toggle the LED on / off using the DDR Registers and just
-// leave the PWM operating all the time.  Note that these methods
-// are inlined to save space
-
-#if 0
-
-void led_off(void)
-{
-  DDRB  &= ~_BV(DDB3);
-}
-
-
-void led_on(void)
-{
-  DDRB  |= _BV(DDB3);
-}
-
-#endif
 
 
 // Blinks the led the specified number of times with a 50% duty cycle
@@ -47,8 +24,8 @@ void led_blink(uint8_t count)
   count<<=1;
   do
     {
-      _delay_loop_2(64<<8);
-      DDRB ^= _BV(DDB3);
+      _delay_ms(40);
+      DDRB ^= _BV(DDB1);
     }
   while(--count);
 }

@@ -1,7 +1,5 @@
 #include <avr/io.h>
 #include "led.h"
-#include "key_mapping.h"
-#include "cpld_if.h"
 #include <inttypes.h>
 #include "hex_string.h"
 #include "state_machine.h"

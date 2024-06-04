@@ -6,13 +6,13 @@
 #include "semaphore.h"
 #include "key.h"
 #include "led.h"
-#include "cpld_if.h"
 #include "state_machine.h"
 #include <avr/wdt.h>
 #include <avr/pgmspace.h>
 #include "soft_reset.h"
 #include "user_config.h"
 #include "key_defs.h"
+#include "scanner.h"
 
 #ifdef __DEBUG__
 #include "hex_string.h"
@@ -20,7 +20,7 @@
 
 // Turn on this define to output a wave when data is found on the
 // PORTD1 bit
-//#define SCOPE_TRIGGER 1
+#define SCOPE_TRIGGER 1
 
 void timer0_rearm(void);
 void process_data(void);
@@ -48,8 +48,10 @@ ISR(TIMER0_OVF_vect)
   sem_give(&sem_tick_64);
 }
 
-// Always setup in the capture to trigger the end after
-// 10ms elapsed
+ISR(TIMER2_OVF_vect)
+{
+}
+
 ISR(TIMER0_COMPA_vect)
 {
   // rearm for 10ms
@@ -57,6 +59,18 @@ ISR(TIMER0_COMPA_vect)
   // process any pulses since we have not seen one for a while, 
   // reset capture logic
   sem_give(&sem_data_ready);
+}
+
+ISR(TIMER2_COMPA_vect)
+{
+   // disable my interrupt and reenable the 
+   // capture interrupt
+   TIMSK2&=~(1<<OCIE2A);
+   TIFR1 |= (1<<ICF1);
+   TIMSK1 |= (1<<ICIE1);
+#ifdef SCOPE_TRIGGER
+   PORTD |= (1<<PORTD0);
+#endif
 }
 
 unsigned char pulse_time;
@@ -67,6 +81,15 @@ ISR(TIMER1_CAPT_vect)
   unsigned char lb = ICR1L;
   unsigned char hb = ICR1H;
   unsigned char edge_time = hb<<6 | lb>>2;
+
+  // Setup deglitch
+  TIMSK1 &= ~(1<<ICIE1);
+  OCR2A = TCNT2 + 0x30;
+  TIMSK2 |= (1<<OCIE2A);
+  TIFR2 |= (1<<OCF2A);
+#ifdef SCOPE_TRIGGER
+  PORTD &= ~(1<<PORTD0);
+#endif
   
    
   // if rising edge
@@ -74,13 +97,13 @@ ISR(TIMER1_CAPT_vect)
     {
 
       //led_off();
-#ifdef SCOPE_TRIGGER
-      PORTD |= (1<<PORTD1);  // scope trigger
-#endif
       
       // determine pulse time, verify if this is correct even, the
       // value is 8 bits, so there is no need to truncate or mask
       pulse_time = (edge_time - pulse_time);
+#ifdef SCOPE_TRIGGER
+      PORTD &= ~(1<<PORTD1);  // scope trigger
+#endif
 
       // process pulse
       sem_give(&sem_pulse);
@@ -91,24 +114,26 @@ ISR(TIMER1_CAPT_vect)
       pulse_time = edge_time;
 
 #ifdef SCOPE_TRIGGER
-      PORTD &= ~(1<<PORTD1);
+      PORTD |= (1<<PORTD1);
 #endif
     }
 
-  // toggle edge polarity
-  TCCR1B ^= (1<<ICES1);
-
+  
   // reset our expiration timer
   timer0_rearm();
+
+  // toggle edge polarity
+  TCCR1B ^= (1<<ICES1);
+  
 }
 
 
 void timer0_rearm(void)
 {
   // add about 10ms based on a divider of 256
-  OCR0A = TCNT0 + 40;
+  OCR0A = TCNT0 + 80;
   // clear any pending interrupt
-  TIFR |= (1<<OCF0A);
+  TIFR0 |= (1<<OCF0A);
 
   // NOTE: This code is duped in the init to save time
 }
@@ -120,17 +145,17 @@ void timer0_rearm(void)
 void timer0_init(void)
 {
   TCCR0A = 0;
-  TCCR0B = (1<<CS02); // div 256 -- 0.25ms period
+  TCCR0B = (1<<CS02)|(1<<CS00); // div 256 -- 0.25ms period
 
   // Instead of calling timer0_rearm, just duplicate the
   // code for the reset of the counter and interrupt ack.
-  OCR0A = TCNT0 + 40;
+  OCR0A = TCNT0 + 80;
 
   // Enable the output compare a and the overflow
-  //TIMSK |= (1<<OCIE0A) | (1<<TOIE0);
+  TIMSK0 |= (1<<OCIE0A) | (1<<TOIE0); 
 
   // clear any spurious captures that already occurred
-  TIFR |= ((1<<ICF1) | (1<<OCF0A));
+//  TIFR0 |= (1<<OCF0A);
 }
 
 
@@ -142,9 +167,9 @@ void icp_init(void)
   // Requires wgm[12:10]=1;, also setup the LED bits here
   TCCR1A |= (1<<WGM10)|(1<<WGM11)|   _BV(COM1A1)|_BV(COM1A0);
   // Noise cancel, falling edge, scale by 8, 8us period
-  TCCR1B |= (1<<ICNC1)|(1<<CS11)|(1<<WGM12);
+  TCCR1B |= (1<<ICNC1)|(1<<CS11)|(1<<CS10)|(1<<WGM12);
 
-  //TIMSK |= (1<<ICIE1);
+  TIMSK1 |= (1<<ICIE1);
 
   //AME Temporary only, redo this with the Analog comparator
   // This will enable the bandgap, but still allow the control
@@ -153,6 +178,15 @@ void icp_init(void)
   //ACSR = (1<<ACBG) | (1<<ACIC);  // THIS AND THE ONE AFTER IT ...
   //PORTB |= (1<<PORTB0);
 
+}
+
+void timer2_init(void)
+{
+   // based on 8MHz, clock, divide down to 1us period
+   TCCR2A = 0;
+   TCCR2B |= (1<<CS21);
+   // we enable the interrupt later
+   TIMSK2 |= (1<<TOIE2);
 }
 
 #ifdef __DEBUG__
@@ -238,6 +272,7 @@ void process_data(void)
   //unsigned char count = pulse_stream_bit_count();
 
 
+   // we enable the interrupt later
   // To reduce code size, we will access the pulse_bit_count and pulse_stream_bits
   // directly. AME
   if (pulse_bit_count>=10)
@@ -293,7 +328,10 @@ void run_state_startup(void)
   if (config_load_user_value(reg_sensor_sel))
   {
      ACSR = (1<<ACBG) | (1<<ACIC); 
-     PORTB |= (1<<PORTB0);  // Enable the interla pullup
+
+	 // for the analog in to work, we need to enabled the internal
+	 // pullup to provide the termination.
+     PORTD |= (1<<PORTD7);  
   }
   
   // Are we going to track the power status of the user?
@@ -304,19 +342,26 @@ void run_state_startup(void)
   
 }
 
-
 int main(void)
 {
+#if 1
+CLKPR = (1 << CLKPCE);
+CLKPR = 0;
+#endif
 
   led_init(0xFF);
+  scanner_init();
 
-  cpld_reset();
+#ifdef SCOPE_TRIGGER
+  DDRD |= (1<<PORTD1) | (1<<PORTD0);
+#endif
 
 #ifdef __DEBUG__
   uart_init();
 #endif
 
   timer0_init();
+  timer2_init();  // deglitching timer
 
   // reset and init the configuration data
   config_init();
@@ -324,17 +369,15 @@ int main(void)
   // The actual data capture process
   process_reset();
  
-  // coalesce all interrupts to here 
-  TIMSK |= (1<<OCIE0A) | (1<<TOIE0) | (1<<ICIE1);
-
-  //sei();
-#ifdef SCOPE_TRIGGER
-  DDRD |= (1<<PORTD1);  
+  // setup scanning interrupts
+#if 1
+  EICRA  |= (1<<ISC10) | (1<<ISC00);
+  EIMSK  |= (1<<INT1) | (1<<INT0);
 #endif
+  
 
   for(;;)
     {
-
       if(sem_wait(&sem_pulse))
 	{
 	  pulse_stream_add(pulse_time);
@@ -344,7 +387,7 @@ int main(void)
 	{
 	  process_data();
 	}
-      
+
       if (sem_wait(&sem_tick_64))
 	{
 	  state_machine_process(EV_TICK_64MS);
@@ -354,4 +397,5 @@ int main(void)
 
   return 0;
 }
+
 

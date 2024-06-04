@@ -3,8 +3,8 @@
 #include "state_machine.h"
 #include "led.h"
 #include "key.h"
-#include "cpld_if.h"
-#include "key_mapping.h"
+#include "scanner.h"
+#include "scan_mapping.h"
 #include "user_config.h"
 #include "soft_reset.h"
 #include <avr/pgmspace.h>
@@ -14,6 +14,8 @@
 // allow 0-8 for the values of the registers based on the 
 // sony key codes.
 #define MAX_REG_NUM 9
+
+//#define scanner_command(x) ;
 
 
 typedef struct state_output
@@ -54,7 +56,6 @@ state_t state_prog_start(event_t ev)
 {
   state_t state;
   state.next = state_prog_wait;
-  //led_blink(5);
   timeout  = TO10S;
   led_on();
   return state;
@@ -325,10 +326,10 @@ state_t state_run(event_t ev)
  switch(ev)
     {  
     case EV_KEY_PRS:
-      // If pressed, then send the command to the cpld and
+      // If pressed, then send the command to the scanner and
       // illuminate the led, 
-      cmd = map_get_cpld_code(active_key_code);
-      cpld_command(cmd);
+      cmd = map_get_scanner_code(active_key_code);
+      scanner_command(cmd);
       state.next = state_run_key_prs;
       led_on();
       power_state = 1;
@@ -356,7 +357,7 @@ state_t state_run(event_t ev)
     case EV_TIMEOUT:
       // We were set to auto reset by the transitory state 
       // because a key was held;
-      cpld_reset();
+      scanner_reset();
       led_off();
       break;
 
@@ -434,7 +435,7 @@ state_t state_run_key_prs(event_t ev)
   if (ev == EV_KEY_RLS || ev == EV_MAGIC_RLS)
     {
       led_off();
-      cpld_reset();
+      scanner_reset();
       state.next = state_run;
     }
   else
@@ -482,9 +483,9 @@ state_t state_run_magic_rls(event_t ev)
     // Waits for 3s for another key and then transmit last choice
     case EV_TIMEOUT:
       led_blink(2);
-      cmd = map_get_cpld_code(active_key_code);
-      cpld_command(cmd);
-      cpld_reset();
+      cmd = map_get_scanner_code(active_key_code);
+      scanner_command(cmd);
+      scanner_reset();
       state.next = state_run;
       break;
 
@@ -493,8 +494,8 @@ state_t state_run_magic_rls(event_t ev)
       // state that waits for the release event to move forward
     case EV_MAGIC_PRS:
       led_on();
-      cmd = map_get_cpld_code(active_key_code);
-      cpld_command(cmd);
+      cmd = map_get_scanner_code(active_key_code);
+      scanner_command(cmd);
       state.next = state_run_key_prs;
       break;
 
@@ -503,8 +504,8 @@ state_t state_run_magic_rls(event_t ev)
       // but do not release in the next state
       led_on();
       led_blink(1);
-      cmd = map_get_cpld_code(active_key_code);
-      cpld_command(cmd);
+      cmd = map_get_scanner_code(active_key_code);
+      scanner_command(cmd);
       state.next = state_run_hold_key_prs;
       break;
 
@@ -588,12 +589,12 @@ state_t state_run_shutdown_macro(event_t ev)
       if (phase) // release key phase
 	{
 	  // If timeout is greater than 1, then release the key
-	  if (val>1) { cpld_reset(); } 
+	  if (val>1) { scanner_reset(); } 
 	}
       else       // press key phase
 	{
       
-	  cpld_command(map_get_cpld_code(key_seq.key));
+	  scanner_command(map_get_scanner_code(key_seq.key));
 	}
 
       sub_state++;

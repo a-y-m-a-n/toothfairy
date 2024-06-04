@@ -5,7 +5,7 @@
 #include <avr/wdt.h>
 
 
-extern inline void soft_reset(void) { wdt_enable(WDTO_15MS); while(1); }
+static inline void soft_reset(void) { wdt_enable(WDTO_15MS); while(1); }
 
 
 
